@@ -9,6 +9,10 @@ This is a MERN stack application from the "MERN Stack Front To Back" course on [
 Such is the nature of software; things change frequently, newer more robust paradigms emerge and packages are continuously evolving.
 Hopefully the below will help you adjust your course code to manage the most notable changes.
 
+The master branch of this repository contains all the changes and updates, so if you're following along with the lectures in the Udemy course and need reference code to compare against please checkout the [origionalcoursecode](https://github.com/bradtraversy/devconnector_2.0/tree/originalcoursecode) branch. Much of the code in this master branch is compatible with course code but be aware that if you adopt some of the changes here, it may require other changes too.
+
+After completing the course you may want to look through this branch and play about with the changes.
+
 ## Changes to GitHub API authentication
 
 Since the course was published, GitHub has [depreciated authentication via URL query parameters](https://developer.github.com/changes/2019-11-05-deprecated-passwords-and-authorizations-api/#authenticating-using-query-parameters)
@@ -106,7 +110,7 @@ to
 const id = uuidv4();
 ```
 
-## Addition of normalize-url package
+## Addition of normalize-url package 🌎
 
 Depending on what a user enters as their website or social links, we may not get a valid clickable url.
 For example a user may enter _**traversymedia.com**_ or _**www.traversymedia.com**_ which won't be a clickable valid url in the UI on the users profile page.
@@ -115,12 +119,12 @@ To solve this we brought in [normalize-url](https://www.npmjs.com/package/normal
 Regardless of what the user enters it will ammend the url accordingly to make it valid (assuming the site exists).
 You can see the use here in [routes/api/profile.js](https://github.com/bradtraversy/devconnector_2.0/blob/31e5318592b886add58923c751dba73274c711de/routes/api/profile.js#L71)
 
-## Fix broken links in gravatar
+## Fix broken links in gravatar 🔗
 
 There is an unresolved [issue](https://github.com/emerleite/node-gravatar/issues/47) with the [node-gravatar](https://github.com/emerleite/node-gravatar#readme) package, whereby the url is not valid. Fortunately we added normalize-url so we can use that to easily fix the issue. If you're not seeing Gravatar avatars showing in your app then most likely you need to implement this change.
 You can see the code use here in [routes/api/users.js](https://github.com/bradtraversy/devconnector_2.0/blob/master/routes/api/users.js#L44)
 
-## Redux subscription to manage local storage
+## Redux subscription to manage local storage 📥
 
 The rules of redux say that our [reducers should be pure](https://redux.js.org/basics/reducers#handling-actions) and do just one thing.
 
@@ -144,6 +148,24 @@ The subscription can be seen in [client/src/store.js](https://github.com/bradtra
 We also need to change our [client/src/utils/setAuthToken.js](https://github.com/bradtraversy/devconnector_2.0/blob/master/client/src/utils/setAuthToken.js) so it now handles both the setting of the token in local storage and in axios headers.
 
 With those two changes in place we can remove all setting of local storage from [client/src/reducers/auth.js](https://github.com/bradtraversy/devconnector_2.0/blob/master/client/src/reducers/auth.js). And remove setting of the token in axios headers from [client/src/actions/auth.js](https://github.com/bradtraversy/devconnector_2.0/blob/master/client/src/actions/auth.js). This helps keep our code predictable, manageable and ultimately bug free.
+
+## Component reuse ♻️
+
+The EditProfile and CreateProfile have been reduced to one component [ProfileForm.js](https://github.com/bradtraversy/devconnector_2.0/blob/master/client/src/components/profile-forms/ProfileForm.js)  
+The majority of this logic came from the refactrored EditProfile Component.
+
+## Log user out on token expiration 🔐
+
+If the Json Web Token expires then it should log the user out and end the authentication of their session.
+
+We can do this using a [axios interceptor](https://github.com/axios/axios#interceptors) together paired with creating an instance of axios.  
+The interceptor, well... intercepts any response and checks the response from our api for a `'Token is not valid'` message.  
+ie. the token has now expired and is no longer valid.  
+If such a message exists then we log out the user and clear the profile from redux state.
+
+**You can see the implementation of the interceptor and axios instance in [utils/api.js](https://github.com/bradtraversy/devconnector_2.0/blob/master/client/src/utils/api.js)**
+
+Creating an instance of axios also cleans up our action creators in [actions/auth.js](https://github.com/bradtraversy/devconnector_2.0/blob/master/client/src/actions/auth.js), [actions/profile.js](https://github.com/bradtraversy/devconnector_2.0/blob/master/client/src/actions/profile.js) and [actions/post.js](https://github.com/bradtraversy/devconnector_2.0/blob/master/client/src/actions/post.js)
 
 ---
 
@@ -186,6 +208,9 @@ npm run build
 ```
 
 ### Test production before deploy
+
+After running a build in the client 👆, cd into the root of the project.  
+And run...
 
 ```bash
 NODE_ENV=production node server.js
@@ -244,7 +269,15 @@ git checkout master
 git branch -D production
 ```
 
-Or you can leave it to merge and push updates from another branch.
+Or you can leave it to merge and push updates from another branch.  
+Make any changes you need on your master branch and merge those into your production branch.
+
+```bash
+git checkout production
+git merge master
+```
+
+Once merged you can push to heroku as above and your site will rebuild and be updated.
 
 ---
 
